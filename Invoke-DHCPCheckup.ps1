@@ -283,7 +283,7 @@ function Invoke-DHCPCheckup
     Invoke-DHCPCheckup -domainName akamai.test
 
     .LINK
-    <TODO>
+    https://akamai.com/blog/security-research/spoofing-dns-by-abusing-dhcp
 
 
     #>
@@ -310,7 +310,7 @@ function Invoke-DHCPCheckup
  |_____|_| |_|\_/ \___/|_|\_\___|      |_____/|_|  |_|\_____|_|     \_____|_| |_|\___|\___|_|\_\\__,_| .__/ 
                                                                                                      | |    
 Microsoft DHCP Server Risk Assessment                                                                |_|       
-By Ori David Of Akamai SIG
+By Ori David of Akamai SIG
 
 "@
     
