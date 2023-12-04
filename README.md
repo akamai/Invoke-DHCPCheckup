@@ -2,7 +2,7 @@
 
 Invoke-DHCPCheckup is a tool meant to identify risky DHCP and DNS configurations in Active Directory environments.
 For additional information please refer to our blogpost:
-link
+https://akamai.com/blog/security-research/spoofing-dns-by-abusing-dhcp
 
 
 
