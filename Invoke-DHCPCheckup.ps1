@@ -182,8 +182,9 @@ function Check-DnsUpdateProxyMembership
     $allDhcpServers = Get-DhcpServerInDC
 
     # Check for members of DNSUpdateproxy
+    # 1102 is the RID of DNSUpdateProxy
 
-    $updateProxymembers = Get-ADGroupMember "DNSUpdateProxy"
+    $updateProxymembers = Get-ADGroup -Filter * | Where-Object -Property SID -like "*-1102" | Get-ADGroupMember | Select-Object name
 
     foreach ($member in $updateProxymembers)
     {
