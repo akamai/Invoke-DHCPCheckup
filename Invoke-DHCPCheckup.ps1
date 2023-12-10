@@ -86,7 +86,7 @@ function Check-DnsCredentialSettings
             $DhcpCredentials += ,($serverDnsCredential.UserName, $serverDisplayName)
 
             # Check if the DNS credential is strong
-            if ($serverDnsCredential.UserName -in $strongGroupsMembers.name)
+            if ($serverDnsCredential.UserName -in $strongGroupsMembers)
             {
                 Write-Host "[*] $($serverDisplayName) - The credential '$($serverDnsCredential.UserName)' is a Member of a strong group. This means that a malicious DHCP client could spoof any DNS record in the zone."
             
@@ -100,7 +100,7 @@ function Check-DnsCredentialSettings
             $DhcpCredentials += ,(($serverCN + "$"), $serverDisplayName)
         
             # Check if the DNS credential is strong
-            if ($serverCN -in $strongGroupsMembers.name)
+            if ($serverCN -in $strongGroupsMembers)
             {
                 Write-Host "[*] $($serverDisplayName) - The credential '$($serverCN)$' is a Member of a strong group. This means that a malicious DHCP client could spoof any DNS record in the zone."
 
