@@ -205,7 +205,7 @@ function Find-VulnerableDnsRecords
     $printed = $False
 
 
-    $DnsRecords = Get-DnsServerResourceRecord -ZoneName $domainName
+    $DnsRecords = Get-DnsServerResourceRecord -ZoneName $domainName -ComputerName $dnsServerName
 
     foreach ($record in $DnsRecords)
     {
@@ -276,11 +276,14 @@ function Invoke-DHCPCheckup
     - DNS records with weak permissions
 
 
-    .PARAMETER DomainName
+    .PARAMETER domainName
     The name of the Active Directory domain that we are scanning
 
+    .PARAMETER dnsServerName
+    The name of the DNS server that hosts the ADI-DNS zone in the domain
+
     .EXAMPLE
-    Invoke-DHCPCheckup -domainName akamai.test
+    Invoke-DHCPCheckup -domainName akamai.test -dnsServerName dc2022.akamai.test
 
     .LINK
     https://akamai.com/blog/security-research/spoofing-dns-by-abusing-dhcp
@@ -291,6 +294,7 @@ function Invoke-DHCPCheckup
     param
     (
         [parameter(Mandatory=$True)][String]$domainName,
+        [parameter(Mandatory=$True)][String]$dnsServerName,
         [parameter(ValueFromRemainingArguments=$true)]$invalid_parameter
     )
 
