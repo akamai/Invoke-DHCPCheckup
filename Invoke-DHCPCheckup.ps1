@@ -42,18 +42,12 @@ function GetActiveActiveDhcpServers
 
 function GetStrongUsers
 {
-    $strongGroupsSIDs = (
-     "*-516", # Domain Controllers
-     "*-512", # Domain Admins 
-     "*-519", # Enterprise Admins 
-     "*-544", # Administrators
-     "*-1101" # DnsAdmins
-     )
+    $strongGroups = ("Domain Controllers", "Domain Admins", "Enterprise Admins", "DnsAdmins", "Administrators")
     $strongGroupsMembers = @()
 
-    foreach ($groupSID in $strongGroupsSIDs)
+    foreach ($group in $strongGroups)
     {
-        $strongGroupsMembers += Get-ADGroup -Filter * | Where-Object -Property SID -like $groupSID | Get-ADGroupMember | Select-Object name
+        $strongGroupsMembers += Get-ADGroupMember $group | select name
     }
 
     $strongGroupsMembers = $strongGroupsMembers | select name -unique 
