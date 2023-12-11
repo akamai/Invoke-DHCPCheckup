@@ -39,6 +39,8 @@ PS C:\Users\Administrator> Import-Module C:\Users\Administrator\Desktop\DHCP-Che
 PS C:\Users\Administrator> Invoke-DHCPCheckup -domainName <domain name>
 ```
 
+For domains that use languages other than english as their default language, adjust the names of the strong groups at line 45 if necessary.
+
 -------
 Copyright 2023 Akamai Technologies Inc.
 
