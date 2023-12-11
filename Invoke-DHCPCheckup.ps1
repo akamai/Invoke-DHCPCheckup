@@ -86,7 +86,7 @@ function Check-DnsCredentialSettings
             $DhcpCredentials += ,($serverDnsCredential.UserName, $serverDisplayName)
 
             # Check if the DNS credential is strong
-            if ($serverDnsCredential.UserName -in $strongGroupsMembers)
+            if ($serverDnsCredential.UserName -in $strongGroupsMembers.name)
             {
                 Write-Host "[*] $($serverDisplayName) - The credential '$($serverDnsCredential.UserName)' is a Member of a strong group. This means that a malicious DHCP client could spoof any DNS record in the zone."
             
@@ -100,7 +100,7 @@ function Check-DnsCredentialSettings
             $DhcpCredentials += ,(($serverCN + "$"), $serverDisplayName)
         
             # Check if the DNS credential is strong
-            if ($serverCN -in $strongGroupsMembers)
+            if ($serverCN -in $strongGroupsMembers.name)
             {
                 Write-Host "[*] $($serverDisplayName) - The credential '$($serverCN)$' is a Member of a strong group. This means that a malicious DHCP client could spoof any DNS record in the zone."
 
@@ -182,9 +182,8 @@ function Check-DnsUpdateProxyMembership
     $allDhcpServers = Get-DhcpServerInDC
 
     # Check for members of DNSUpdateproxy
-    # 1102 is the RID of DNSUpdateProxy
 
-    $updateProxymembers = Get-ADGroup -Filter * | Where-Object -Property SID -like "*-1102" | Get-ADGroupMember | Select-Object name
+    $updateProxymembers = Get-ADGroupMember "DNSUpdateProxy"
 
     foreach ($member in $updateProxymembers)
     {
