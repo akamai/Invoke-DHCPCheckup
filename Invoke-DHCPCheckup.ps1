@@ -229,18 +229,22 @@ function Find-VulnerableDnsRecords
         foreach ($cred in $DhcpCredentials)
         {
            
-            $DhcpServerCredential = $cred[0]
-            $DhcpServerName = $cred[1]
+            $DhcpServerCredential = $cred.split(' ')[0]
+            $DhcpServerName = $cred.split(' ')[1]
 
-            if ($recordAcl.Owner.Split('\\')[1] -eq $DhcpServerCredential)
+            if ($recordAcl.Owner -ne $null)
             {
-                if (!($recordDisplayName -in $vulnerableRecords))
+                if ($recordAcl.Owner.Split('\\')[1] -eq $DhcpServerCredential)
                 {
-                    Write-Host "[*] The record '$($recordDisplayName)' is owned by the DHCP server $($DhcpServerName) with the credential '$($DhcpServerCredential)'. It is vulnerable to spoofing by malicious DHCP clients."
-                    $vulnerableRecords += $recordDisplayName
-                    $printed = $True
+                    if (!($recordDisplayName -in $vulnerableRecords))
+                    {
+                        Write-Host "[*] The record '$($recordDisplayName)' is owned by the DHCP server $($DhcpServerName) with the credential '$($DhcpServerCredential)'. It is vulnerable to spoofing by malicious DHCP clients."
+                        $vulnerableRecords += $recordDisplayName
+                        $printed = $True
+                    }
                 }
             }
+
         }
     }
 
