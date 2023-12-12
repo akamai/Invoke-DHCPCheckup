@@ -26,7 +26,7 @@ The tool identifies the following misconfigurations:
 
 
 ## Usage
-Invoke-DHCPCheckup relies on the DHCP server management API and requires a strong user to run.
+Invoke-DHCPCheckup relies on the DHCP server management API and requires to run as a user that is part of the "DHCP Administrators" and "DNSAdmins" groups.
 
 It also requires the following Powershell modules: 
 - ActiveDirectory
