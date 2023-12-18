@@ -1,4 +1,4 @@
-﻿Import-Module DHCPServer
+Import-Module DHCPServer
 Import-Module ActiveDirectory
 Import-Module DnsServer
 
@@ -42,7 +42,17 @@ function GetActiveActiveDhcpServers
 
 function GetStrongUsers
 {
-    $strongGroups = ("Domain Controllers", "Domain Admins", "Enterprise Admins", "DnsAdmins", "Administrators")
+    param
+    (
+        [parameter()][ValidateSet('en','de')][String]$LangCode
+    )
+
+    switch($LangCode)
+    {
+        'en' {$strongGroups = ("Domain Controllers", "Domain Admins", "Enterprise Admins", "DnsAdmins", "Administrators")}
+        'de' {$strongGroups = ("Domänencontroller", "Domänen-Admins", "Organisations-Admins", "DnsAdmins", "Administratoren")}
+    }
+
     $strongGroupsMembers = @()
 
     foreach ($group in $strongGroups)
@@ -286,6 +296,9 @@ function Invoke-DHCPCheckup
     .PARAMETER dnsServerName
     The name of the DNS server that hosts the ADI-DNS zone in the domain
 
+    .PARAMETER LangCode
+    The language code for the Active Directory default language that is been used
+
     .EXAMPLE
     Invoke-DHCPCheckup -domainName akamai.test -dnsServerName dc2022.akamai.test
 
@@ -299,6 +312,7 @@ function Invoke-DHCPCheckup
     (
         [parameter(Mandatory=$True)][String]$domainName,
         [parameter(Mandatory=$True)][String]$dnsServerName,
+        [parameter()][ValidateSet('en','de')][String]$LangCode = 'en',
         [parameter(ValueFromRemainingArguments=$true)]$invalid_parameter
     )
 
@@ -346,7 +360,7 @@ By Ori David of Akamai SIG
 
 
     # Get a list of strong group members
-    $strongGroupMembers = GetStrongUsers
+    $strongGroupMembers = GetStrongUsers -LangCode $LangCode
 
 
     Write-Host "`n-----------------------------------------`nChecking DNS Credentials Settings`n-----------------------------------------`n"
