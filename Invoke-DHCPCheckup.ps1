@@ -296,6 +296,9 @@ function Invoke-DHCPCheckup
     .PARAMETER dnsServerName
     The name of the DNS server that hosts the ADI-DNS zone in the domain
 
+    .PARAMETER LangCode
+    The language code for the Active Directory default language that is been used
+
     .EXAMPLE
     Invoke-DHCPCheckup -domainName akamai.test -dnsServerName dc2022.akamai.test
 
