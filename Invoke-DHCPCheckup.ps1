@@ -208,10 +208,14 @@ function Find-VulnerableDnsRecords
     # Scan the permissions of all the DNS records in the zone to find vulnerable ones
 
     $authenticatedUsersRecords = @()
+    $authenticatedUsersWriteAuthenticatedUserSID = @()
+    $authenticatedUsersWriteAuthenticatedUserUser = @()
     $vulnerableRecords = @()
     $printed = $False
 
-
+    $authenticatedUsersWriteAuthenticatedUserSID = New-Object System.Security.Principal.SecurityIdentifier(“S-1-5-11“)
+    $authenticatedUsersWriteAuthenticatedUserUser = $authenticatedUsersWriteAuthenticatedUserSID.Translate( [System.Security.Principal.NTAccount])
+    
     $DnsRecords = Get-DnsServerResourceRecord -ZoneName $domainName -ComputerName $dnsServerName
 
     foreach ($record in $DnsRecords)
@@ -220,9 +224,8 @@ function Find-VulnerableDnsRecords
         $recordDisplayName = $record.HostName.ToUpper()
         $recordAcl = get-acl -path "AD:$($record.DistinguishedName)"
         
-
         # Check if the "Authenticated Users" group has write permissions over the record
-        $authenticatedUsersWrite = $recordAcl.Access | Where-Object {($_.ActiveDirectoryRights -eq "GenericWrite") -and ($_.IdentityReference -eq "NT AUTHORITY\Authenticated Users")}
+        $authenticatedUsersWrite = $recordAcl.Access | Where-Object {($_.ActiveDirectoryRights -eq "GenericWrite") -and ($_.IdentityReference -eq $authenticatedUsersWriteAuthenticatedUserUser.Value)}
 
         if ($authenticatedUsersWrite)
         {
