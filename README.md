@@ -39,8 +39,6 @@ PS C:\Users\Administrator> Import-Module C:\Users\Administrator\Desktop\Invoke-D
 PS C:\Users\Administrator> Invoke-DHCPCheckup -domainName <domain_name> -dnsServerName <adidns_server_fqdn>
 ```
 
-For domains that use languages other than english as their default language, adjust the names of the strong groups at line 45 if necessary.
-
 -------
 Copyright 2023 Akamai Technologies Inc.
 
