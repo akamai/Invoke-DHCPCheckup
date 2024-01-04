@@ -35,7 +35,7 @@ It also requires the following Powershell modules:
 
 To run use the following commands:
 ```
-PS C:\Users\Administrator> Import-Module C:\Users\Administrator\Desktop\DHCP-Checkup.ps1
+PS C:\Users\Administrator> Import-Module C:\Users\Administrator\Desktop\Invoke-DHCPCheckup.ps1
 PS C:\Users\Administrator> Invoke-DHCPCheckup -domainName <domain_name> -dnsServerName <adidns_server_fqdn>
 ```
 
