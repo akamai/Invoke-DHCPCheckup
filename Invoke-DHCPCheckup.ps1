@@ -184,7 +184,7 @@ function Check-DnsUpdateProxyMembership
 
     # Check for members of DNSUpdateproxy
 
-    $updateProxymembers = Get-ADGroupMember "DNSUpdateProxy"
+    $updateProxymembers = Get-ADGroupMember "DNSUpdateProxy" -Recursive
 
     foreach ($member in $updateProxymembers)
     {
