@@ -42,12 +42,19 @@ function GetActiveActiveDhcpServers
 
 function GetStrongUsers
 {
-    $strongGroups = ("Domain Controllers", "Domain Admins", "Enterprise Admins", "DnsAdmins", "Administrators")
+    $DomainSID = (Get-ADDomain).DomainSID.ToString()
+    $strongGroupsDomainControllers = $DomainSID + "-516"
+    $strongGroupsDomainAdmins = $DomainSID + "-516"
+    $strongGroupsEnterpriseAdmins = $DomainSID + "-519"
+    $strongGroupsDNSAdmins = (get-adgroup dnsadmins).sid.ToString()
+    $strongGroupsAdministrators = "S-1-5-32-544"
+    
+    $strongGroups = ($strongGroupsDomainControllers, $strongGroupsDomainAdmins, $strongGroupsEnterpriseAdmins, $strongGroupsDNSAdmins, $strongGroupsAdministrators)
     $strongGroupsMembers = @()
 
     foreach ($group in $strongGroups)
     {
-        $strongGroupsMembers += Get-ADGroupMember $group | select name
+        $strongGroupsMembers += Get-ADGroupMember $group -Recursive | select name
     }
 
     $strongGroupsMembers = $strongGroupsMembers | select name -unique 
