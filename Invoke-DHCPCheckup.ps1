@@ -42,12 +42,19 @@ function GetActiveActiveDhcpServers
 
 function GetStrongUsers
 {
-    $strongGroups = ("Domain Controllers", "Domain Admins", "Enterprise Admins", "DnsAdmins", "Administrators")
+    $DomainSID = (Get-ADDomain).DomainSID.ToString()
+    $strongGroupsDomainControllers = $DomainSID + "-516"
+    $strongGroupsDomainAdmins = $DomainSID + "-516"
+    $strongGroupsEnterpriseAdmins = $DomainSID + "-519"
+    $strongGroupsDNSAdmins = (get-adgroup dnsadmins).sid.ToString()
+    $strongGroupsAdministrators = "S-1-5-32-544"
+    
+    $strongGroups = ($strongGroupsDomainControllers, $strongGroupsDomainAdmins, $strongGroupsEnterpriseAdmins, $strongGroupsDNSAdmins, $strongGroupsAdministrators)
     $strongGroupsMembers = @()
 
     foreach ($group in $strongGroups)
     {
-        $strongGroupsMembers += Get-ADGroupMember $group | select name
+        $strongGroupsMembers += Get-ADGroupMember $group -Recursive | select name
     }
 
     $strongGroupsMembers = $strongGroupsMembers | select name -unique 
@@ -177,7 +184,7 @@ function Check-DnsUpdateProxyMembership
 
     # Check for members of DNSUpdateproxy
 
-    $updateProxymembers = Get-ADGroupMember "DNSUpdateProxy"
+    $updateProxymembers = Get-ADGroupMember "DNSUpdateProxy" -Recursive
 
     foreach ($member in $updateProxymembers)
     {
@@ -201,10 +208,14 @@ function Find-VulnerableDnsRecords
     # Scan the permissions of all the DNS records in the zone to find vulnerable ones
 
     $authenticatedUsersRecords = @()
+    $authenticatedUsersWriteAuthenticatedUserSID = @()
+    $authenticatedUsersWriteAuthenticatedUserUser = @()
     $vulnerableRecords = @()
     $printed = $False
 
-
+    $authenticatedUsersWriteAuthenticatedUserSID = New-Object System.Security.Principal.SecurityIdentifier(“S-1-5-11“)
+    $authenticatedUsersWriteAuthenticatedUserUser = $authenticatedUsersWriteAuthenticatedUserSID.Translate( [System.Security.Principal.NTAccount])
+    
     $DnsRecords = Get-DnsServerResourceRecord -ZoneName $domainName -ComputerName $dnsServerName
 
     foreach ($record in $DnsRecords)
@@ -213,9 +224,8 @@ function Find-VulnerableDnsRecords
         $recordDisplayName = $record.HostName.ToUpper()
         $recordAcl = get-acl -path "AD:$($record.DistinguishedName)"
         
-
         # Check if the "Authenticated Users" group has write permissions over the record
-        $authenticatedUsersWrite = $recordAcl.Access | Where-Object {($_.ActiveDirectoryRights -eq "GenericWrite") -and ($_.IdentityReference -eq "NT AUTHORITY\Authenticated Users")}
+        $authenticatedUsersWrite = $recordAcl.Access | Where-Object {($_.ActiveDirectoryRights -eq "GenericWrite") -and ($_.IdentityReference -eq $authenticatedUsersWriteAuthenticatedUserUser.Value)}
 
         if ($authenticatedUsersWrite)
         {
