@@ -1,4 +1,4 @@
-﻿Import-Module DHCPServer
+Import-Module DHCPServer
 Import-Module ActiveDirectory
 Import-Module DnsServer
 
@@ -42,12 +42,19 @@ function GetActiveActiveDhcpServers
 
 function GetStrongUsers
 {
-    $strongGroups = ("Domain Controllers", "Domain Admins", "Enterprise Admins", "DnsAdmins", "Administrators")
+    $DomainSID = (Get-ADDomain).DomainSID.ToString()
+    $strongGroupsDomainControllers = $DomainSID + "-516"
+    $strongGroupsDomainAdmins = $DomainSID + "-516"
+    $strongGroupsEnterpriseAdmins = $DomainSID + "-519"
+    $strongGroupsDNSAdmins = (get-adgroup dnsadmins).sid.ToString()
+    $strongGroupsAdministrators = "S-1-5-32-544"
+    
+    $strongGroups = ($strongGroupsDomainControllers, $strongGroupsDomainAdmins, $strongGroupsEnterpriseAdmins, $strongGroupsDNSAdmins, $strongGroupsAdministrators)
     $strongGroupsMembers = @()
 
     foreach ($group in $strongGroups)
     {
-        $strongGroupsMembers += Get-ADGroupMember $group | select name
+        $strongGroupsMembers += Get-ADGroupMember $group -Recursive | select name
     }
 
     $strongGroupsMembers = $strongGroupsMembers | select name -unique 
@@ -171,13 +178,76 @@ function Check-DhcpNameProtectionSettings
     }
 }
 
+function Check-DhcpDynamicNameUpdateSettings
+{
+    param(
+    [parameter(Mandatory=$True)][String[]]$ActiveDhcpServers
+    )
+
+    foreach ($server in $ActiveDhcpServers)
+    {
+        $printed = $False
+        $serverDisplayName = $server.ToUpper()
+
+        # IPv4 settings
+
+        $serverV4DnsSettings = Get-DhcpServerv4DnsSetting -ComputerName $server
+
+        if ($serverV4DnsSettings.DynamicUpdates -ne "Never")
+        {
+            Write-Host "[*] $($serverDisplayName) - DNS Dynamic Updates are enabled (Value: $($serverV4DnsSettings.DynamicUpdates)) on the server level for IPv4. This means that new scopes would be created with DNS Dynamic Updates enabled too."
+            $printed = $True
+        }
+
+        $serverV4Scopes = Get-DhcpServerv4Scope -ComputerName $server
+
+        foreach ($scopeID in $serverV4Scopes)
+        {
+            $scopeV4DnsSettings = Get-DhcpServerv4DnsSetting -ComputerName $server -ScopeId $scopeID.ScopeId.IPAddressToString
+            if ($scopeV4DnsSettings.DynamicUpdates -ne "Never")
+            {
+                Write-Host "[*] $($serverDisplayName) - DNS Dynamic Updates are enabled (Value: $($scopeV4DnsSettings.DynamicUpdates)) for the IPv4 scope: $($scopeID.Name) - $($scopeID.ScopeId.IPAddressToString)"
+                $printed = $True
+            }
+        }
+
+        # IPv6 settings
+
+        $serverV6DnsSettings = Get-DhcpServerv6DnsSetting -ComputerName $server
+
+        if ($serverV6DnsSettings.DynamicUpdates -ne "Never")
+        {
+            Write-Host "[*] $($serverDisplayName) - DNS Dynamic Updates are enabled (Value: $($serverV6DnsSettings.DynamicUpdates)) on the server level for IPv6. This means that new scopes would be created with DNS Dynamic Updates enabled too."
+            $printed = $True
+        }
+
+        $serverV6Scopes = Get-DhcpServerv6Scope -ComputerName $server
+
+        foreach ($scopeID in $serverV6Scopes)
+        {
+            $scopeV6DnsSettings = Get-DhcpServerv6DnsSetting -ComputerName $server -ScopeId $scopeID.ScopeId.IPAddressToString
+            if ($scopeV6DnsSettings.DynamicUpdates -ne "Never")
+            {
+                Write-Host "[*] $($serverDisplayName) - DNS Dynamic Updates are enabled (Value: $($scopeV6DnsSettings.DynamicUpdates)) for the IPv6 scope: $($scopeID.Name) - $($scopeID.ScopeId.IPAddressToString)"
+                $printed = $True
+            }
+        }
+
+
+        if ($printed)
+        {
+            Write-Host ""
+        }
+    }
+}
+
 function Check-DnsUpdateProxyMembership
 {
     $allDhcpServers = Get-DhcpServerInDC
 
     # Check for members of DNSUpdateproxy
 
-    $updateProxymembers = Get-ADGroupMember "DNSUpdateProxy"
+    $updateProxymembers = Get-ADGroupMember "DNSUpdateProxy" -Recursive
 
     foreach ($member in $updateProxymembers)
     {
@@ -201,10 +271,14 @@ function Find-VulnerableDnsRecords
     # Scan the permissions of all the DNS records in the zone to find vulnerable ones
 
     $authenticatedUsersRecords = @()
+    $authenticatedUsersWriteAuthenticatedUserSID = @()
+    $authenticatedUsersWriteAuthenticatedUserUser = @()
     $vulnerableRecords = @()
     $printed = $False
 
-
+    $authenticatedUsersWriteAuthenticatedUserSID = New-Object System.Security.Principal.SecurityIdentifier("S-1-5-11")
+    $authenticatedUsersWriteAuthenticatedUserUser = $authenticatedUsersWriteAuthenticatedUserSID.Translate( [System.Security.Principal.NTAccount])
+    
     $DnsRecords = Get-DnsServerResourceRecord -ZoneName $domainName -ComputerName $dnsServerName
 
     foreach ($record in $DnsRecords)
@@ -213,9 +287,8 @@ function Find-VulnerableDnsRecords
         $recordDisplayName = $record.HostName.ToUpper()
         $recordAcl = get-acl -path "AD:$($record.DistinguishedName)"
         
-
         # Check if the "Authenticated Users" group has write permissions over the record
-        $authenticatedUsersWrite = $recordAcl.Access | Where-Object {($_.ActiveDirectoryRights -eq "GenericWrite") -and ($_.IdentityReference -eq "NT AUTHORITY\Authenticated Users")}
+        $authenticatedUsersWrite = $recordAcl.Access | Where-Object {($_.ActiveDirectoryRights -eq "GenericWrite") -and ($_.IdentityReference -eq $authenticatedUsersWriteAuthenticatedUserUser.Value)}
 
         if ($authenticatedUsersWrite)
         {
@@ -352,6 +425,11 @@ By Ori David of Akamai SIG
     Write-Host "`n-----------------------------------------`nChecking DNS Credentials Settings`n-----------------------------------------`n"
     
     $DhcpCredentials = Check-DnsCredentialSettings -ActiveDhcpServers $ActiveDhcpServers -strongGroupsMembers $strongGroupMembers
+
+
+    Write-Host "`n-----------------------------------------`nChecking DHCP DNS Dynamic Update Settings`n-----------------------------------------`n"
+    
+    Check-DhcpDynamicNameUpdateSettings -ActiveDhcpServers $ActiveDhcpServers
 
 
     Write-Host "`n-----------------------------------------`nChecking DHCP Name Protection Settings`n-----------------------------------------`n"
