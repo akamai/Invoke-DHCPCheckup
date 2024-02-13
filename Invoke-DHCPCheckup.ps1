@@ -213,7 +213,7 @@ function Find-VulnerableDnsRecords
     $vulnerableRecords = @()
     $printed = $False
 
-    $authenticatedUsersWriteAuthenticatedUserSID = New-Object System.Security.Principal.SecurityIdentifier(“S-1-5-11“)
+    $authenticatedUsersWriteAuthenticatedUserSID = New-Object System.Security.Principal.SecurityIdentifier("S-1-5-11")
     $authenticatedUsersWriteAuthenticatedUserUser = $authenticatedUsersWriteAuthenticatedUserSID.Translate( [System.Security.Principal.NTAccount])
     
     $DnsRecords = Get-DnsServerResourceRecord -ZoneName $domainName -ComputerName $dnsServerName
